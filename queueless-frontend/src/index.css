@@ -1,0 +1,34 @@
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,700;1,9..144,500&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600;700&display=swap');
+@import "tailwindcss";
+
+/*
+  Tailwind v4 theming is CSS-first: any --color-* or --font-* variable
+  declared inside @theme automatically becomes a matching utility class.
+  --color-forest here means `bg-forest`, `text-forest`, `border-forest` etc.
+  all work anywhere in the app, exactly like Tailwind's built-in colors.
+*/
+@theme {
+  --color-paper: #F3F6F1;
+  --color-paper-raised: #FFFFFF;
+  --color-ink: #16241C;
+  --color-ink-soft: #4B5A50;
+  --color-forest: #14532D;
+  --color-forest-light: #1F7A45;
+  --color-amber: #E8871E;
+  --color-amber-deep: #C96A0C;
+  --color-amber-tint: #FDE8CE;
+  --color-line: #D8DED2;
+  --color-line-strong: #B9C4B2;
+
+  --font-display: "Fraunces", serif;
+  --font-body: "Inter", -apple-system, sans-serif;
+  --font-mono: "IBM Plex Mono", monospace;
+}
+
+body {
+  margin: 0;
+  background-color: var(--color-paper);
+  color: var(--color-ink);
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+}
