@@ -19,7 +19,7 @@ function Login() {
 
     // TODO: replace with a real call to the backend's /api/auth/login
     console.log('Logging in with', { email, password })
-    navigate('/')
+    navigate('/dashboard')
   }
 
   return (

@@ -1,10 +1,11 @@
 // The signature visual from your design: a "physical ticket" card with a
 // dashed perforation and a barcode strip. Reused on the booking page (as a
 // live preview) and the live queue page.
-function Ticket({ org, service, number, bottomLeft, bottomRight, className = '' }) {
+function Ticket({ org, service, number, bottomLeft, bottomRight, className = '', flat = false }) {
+  const tilt = flat ? '' : '-rotate-3 hover:-rotate-1 hover:-translate-y-1'
   return (
     <div
-      className={`relative w-80 bg-paper-raised rounded-2xl shadow-lg px-6 pt-6 pb-5 -rotate-3 hover:-rotate-1 hover:-translate-y-1 transition-transform ${className}`}
+      className={`relative w-80 bg-paper-raised rounded-2xl shadow-lg px-6 pt-6 pb-5 ${tilt} transition-transform ${className}`}
     >
       <div className="flex flex-col gap-[3px] pb-4">
         <span className="font-mono text-[10.5px] tracking-wide text-ink-soft uppercase">

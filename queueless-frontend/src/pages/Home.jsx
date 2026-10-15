@@ -1,32 +1,92 @@
-import Button from '../components/Button'
-import Ticket from '../components/Ticket'
-import QueueBoard from '../components/QueueBoard'
-import BookAppointment from './BookAppointment'
+import { useState } from "react";
+import { Link } from "react-router-dom";
+import Button from "../components/Button";
+import Ticket from "../components/Ticket";
+import QueueBoard from "../components/QueueBoard";
+import BookAppointment from "./BookAppointment";
 
 const stats = [
-  { value: '2.4 hrs', label: 'avg. time saved per visit' },
-  { value: '180+', label: 'organizations onboard' },
-  { value: '50k+', label: 'tickets issued' },
-]
+  { value: "2.4 hrs", label: "avg. time saved per visit" },
+  { value: "180+", label: "organizations onboard" },
+  { value: "50k+", label: "tickets issued" },
+];
 
 const services = [
-  { letter: 'A', title: 'Account Opening', org: 'First City Bank — Wuse II', time: '~15 min' },
-  { letter: 'B', title: 'Cash Withdrawal', org: 'First City Bank — Wuse II', time: '~5 min' },
-  { letter: 'C', title: 'General Consultation', org: 'Garki General Hospital', time: '~20 min' },
-  { letter: 'D', title: 'Laboratory Test', org: 'Garki General Hospital', time: '~30 min' },
-  { letter: 'E', title: 'Passport Renewal', org: 'NIS Passport Office — Abuja', time: '~40 min' },
-  { letter: 'F', title: 'New Passport Application', org: 'NIS Passport Office — Abuja', time: '~45 min' },
-  { letter: 'G', title: "Driver's License Renewal", org: 'FRSC Licensing Office', time: '~25 min' },
-  { letter: 'H', title: 'Vehicle Registration', org: 'FRSC Licensing Office', time: '~35 min' },
-]
+  {
+    letter: "A",
+    title: "Account Opening",
+    org: "First City Bank — Wuse II",
+    time: "~15 min",
+  },
+  {
+    letter: "B",
+    title: "Cash Withdrawal",
+    org: "First City Bank — Wuse II",
+    time: "~5 min",
+  },
+  {
+    letter: "C",
+    title: "General Consultation",
+    org: "Garki General Hospital",
+    time: "~20 min",
+  },
+  {
+    letter: "D",
+    title: "Laboratory Test",
+    org: "Garki General Hospital",
+    time: "~30 min",
+  },
+  {
+    letter: "E",
+    title: "Passport Renewal",
+    org: "NIS Passport Office — Abuja",
+    time: "~40 min",
+  },
+  {
+    letter: "F",
+    title: "New Passport Application",
+    org: "NIS Passport Office — Abuja",
+    time: "~45 min",
+  },
+  {
+    letter: "G",
+    title: "Driver's License Renewal",
+    org: "FRSC Licensing Office",
+    time: "~25 min",
+  },
+  {
+    letter: "H",
+    title: "Vehicle Registration",
+    org: "FRSC Licensing Office",
+    time: "~35 min",
+  },
+];
 
 const pricing = [
-  { tier: 'Starter', amount: '₦10,000', desc: 'One branch · up to 500 bookings', featured: false },
-  { tier: 'Professional', amount: '₦25,000', desc: 'Multiple branches · advanced analytics', featured: true },
-  { tier: 'Enterprise', amount: '₦50,000+', desc: 'Unlimited branches · custom integrations', featured: false },
-]
+  {
+    tier: "Starter",
+    amount: "₦10,000",
+    desc: "One branch · up to 500 bookings",
+    featured: false,
+  },
+  {
+    tier: "Professional",
+    amount: "₦25,000",
+    desc: "Multiple branches · advanced analytics",
+    featured: true,
+  },
+  {
+    tier: "Enterprise",
+    amount: "₦50,000+",
+    desc: "Unlimited branches · custom integrations",
+    featured: false,
+  },
+];
 
 function Home() {
+  // Which pricing plan is selected (Professional is the featured one)
+  const [plan, setPlan] = useState("Professional");
+
   return (
     <div>
       {/* HERO */}
@@ -42,9 +102,9 @@ function Home() {
               Then take your time.
             </h1>
             <p className="text-ink-soft text-[17px] max-w-[460px] mb-7">
-              Book your spot at any bank, hospital, or government office in Nigeria
-              before you leave the house. Watch the queue move in real time, and
-              arrive right when it's your turn.
+              Book your spot at any bank, hospital, or government office in
+              Nigeria before you leave the house. Watch the queue move in real
+              time, and arrive right when it's your turn.
             </p>
             <div className="flex flex-wrap gap-3.5 mb-12">
               <a href="#book">
@@ -57,7 +117,9 @@ function Home() {
             <div className="flex gap-9 pt-7 border-t border-line">
               {stats.map((s) => (
                 <div key={s.label} className="flex flex-col gap-[3px]">
-                  <strong className="font-mono text-xl text-forest">{s.value}</strong>
+                  <strong className="font-mono text-xl text-forest">
+                    {s.value}
+                  </strong>
                   <span className="text-[12.5px] text-ink-soft">{s.label}</span>
                 </div>
               ))}
@@ -71,8 +133,8 @@ function Home() {
               org="FIRST CITY BANK — WUSE II"
               service="Account Opening"
               number="A-024"
-              bottomLeft={{ label: 'Now serving', value: 'A-021' }}
-              bottomRight={{ label: 'Est. wait', value: '19 min' }}
+              bottomLeft={{ label: "Now serving", value: "A-021" }}
+              bottomRight={{ label: "Est. wait", value: "19 min" }}
             />
           </div>
         </div>
@@ -97,7 +159,9 @@ function Home() {
                 <span className="w-[38px] h-[38px] rounded-[9px] bg-amber-tint text-amber-deep font-mono font-bold text-[13px] flex items-center justify-center mb-4">
                   {s.letter}
                 </span>
-                <h3 className="text-[16.5px] font-semibold mb-1.5">{s.title}</h3>
+                <h3 className="text-[16.5px] font-semibold mb-1.5">
+                  {s.title}
+                </h3>
                 <p className="text-[13.5px] text-ink-soft mb-3.5">{s.org}</p>
                 <div className="flex justify-between border-t border-line pt-3 font-mono text-[11.5px] text-forest-light">
                   <span>{s.time}</span>
@@ -145,29 +209,66 @@ function Home() {
               Run your front desk without the front-desk chaos.
             </h2>
             <p className="text-ink-soft text-[15px] max-w-[420px] mb-6">
-              Give your staff a live queue console, cut no-shows with QR check-in,
-              and see exactly where your bottlenecks are — by branch, by hour, by
-              service.
+              Give your staff a live queue console, cut no-shows with QR
+              check-in, and see exactly where your bottlenecks are — by branch,
+              by hour, by service.
             </p>
-            <Button text="Register your business" />
+            <Link to={`/register?type=business&plan=${plan}`}>
+              <Button text="Register your business" />
+            </Link>
           </div>
 
-          <div className="flex flex-col gap-3.5">
-            {pricing.map((p) => (
-              <div
-                key={p.tier}
-                className={`border rounded-2xl px-6 py-5 flex items-baseline justify-between flex-wrap gap-1 ${
-                  p.featured ? 'border-forest bg-[#EEF5EF]' : 'border-line bg-paper-raised'
-                }`}
-              >
-                <span className="font-semibold text-[14.5px] w-32">{p.tier}</span>
-                <span className="font-mono font-bold text-lg text-forest">
-                  {p.amount}
-                  <span className="text-xs font-medium text-ink-soft">/mo</span>
-                </span>
-                <p className="w-full text-xs text-ink-soft m-0">{p.desc}</p>
-              </div>
-            ))}
+          <div
+            role="radiogroup"
+            aria-label="Choose a plan"
+            className="flex flex-col gap-3.5"
+          >
+            {pricing.map((p) => {
+              const selected = plan === p.tier;
+              return (
+                <button
+                  key={p.tier}
+                  type="button"
+                  role="radio"
+                  aria-checked={selected}
+                  onClick={() => setPlan(p.tier)}
+                  className={`text-left border-[1.5px] rounded-2xl px-6 py-5 flex items-baseline justify-between flex-wrap gap-1 cursor-pointer transition duration-150 hover:-translate-y-0.5 hover:shadow-md ${
+                    selected
+                      ? "border-forest bg-[#EEF5EF]"
+                      : "border-line bg-paper-raised hover:border-forest-light"
+                  }`}
+                >
+                  <span className="flex items-center gap-2.5 font-semibold text-[14.5px] w-44">
+                    <span
+                      className={`w-[18px] h-[18px] rounded-full border-[1.5px] flex items-center justify-center ${
+                        selected
+                          ? "border-forest bg-forest"
+                          : "border-line-strong"
+                      }`}
+                    >
+                      {selected && (
+                        <span className="w-1.5 h-1.5 rounded-full bg-white" />
+                      )}
+                    </span>
+                    {p.tier}
+                    {p.featured && (
+                      <span className="font-mono text-[10px] uppercase tracking-wide text-amber-deep bg-amber-tint rounded-full px-2 py-0.5">
+                        Popular
+                      </span>
+                    )}
+                  </span>
+                  <span className="font-mono font-bold text-lg text-forest">
+                    {p.amount}
+                    <span className="text-xs font-medium text-ink-soft">
+                      /mo
+                    </span>
+                  </span>
+                  <span className="block w-full text-xs text-ink-soft pl-7">
+                    {p.desc}
+                  </span>
+                </button>
+              );
+            })}
           </div>
         </div>
       </section>
@@ -187,7 +288,7 @@ function Home() {
         </div>
       </footer>
     </div>
-  )
+  );
 }
 
-export default Home
+export default Home;
