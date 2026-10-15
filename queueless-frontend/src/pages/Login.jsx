@@ -1,35 +1,53 @@
-import { useState } from 'react'
-import { useNavigate, Link } from 'react-router-dom'
-import Button from '../components/Button'
+import { useState } from "react";
+import { useNavigate, Link } from "react-router-dom";
+import Button from "../components/Button";
+import { useAuth } from "../context/AuthContext";
 
 function Login() {
-  const navigate = useNavigate()
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [error, setError] = useState('')
+  const navigate = useNavigate();
+  const { login } = useAuth();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
 
   const handleSubmit = (e) => {
-    e.preventDefault()
-    setError('')
+    e.preventDefault();
+    setError("");
 
     if (!email || !password) {
-      setError('Please fill in both fields.')
-      return
+      setError("Please fill in both fields.");
+      return;
     }
 
+    // DEMO ONLY: until the real backend returns the user's role, we guess it from
+    // the email. admin@test.com -> admin, staff@test.com -> staff, anything else -> customer.
     // TODO: replace with a real call to the backend's /api/auth/login
-    console.log('Logging in with', { email, password })
-    navigate('/dashboard')
-  }
+    const lower = email.toLowerCase();
+    const role = lower.includes("admin")
+      ? "admin"
+      : lower.includes("staff")
+        ? "staff"
+        : "customer";
+    login({ name: email.split("@")[0], email, role });
+    navigate(
+      role === "admin" ? "/admin" : role === "staff" ? "/staff" : "/dashboard",
+    );
+  };
 
   return (
     <div className="min-h-screen flex justify-center px-4 py-16">
       <div className="w-full max-w-[420px] bg-paper-raised border border-line rounded-2xl shadow-lg px-8 py-9 h-fit">
-        <h1 className="font-display font-semibold text-2xl mb-1">Welcome back</h1>
-        <p className="text-ink-soft text-sm mb-6">Log in to manage your tickets.</p>
+        <h1 className="font-display font-semibold text-2xl mb-1">
+          Welcome back
+        </h1>
+        <p className="text-ink-soft text-sm mb-6">
+          Log in to manage your tickets.
+        </p>
 
         {error && (
-          <p className="text-sm text-[#B8402F] bg-[#F6E3E1] rounded-lg p-2.5 mb-4">{error}</p>
+          <p className="text-sm text-[#B8402F] bg-[#F6E3E1] rounded-lg p-2.5 mb-4">
+            {error}
+          </p>
         )}
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
@@ -59,14 +77,14 @@ function Login() {
         </form>
 
         <p className="text-center text-[13.5px] text-ink-soft mt-5">
-          No account?{' '}
+          No account?{" "}
           <Link to="/register" className="text-forest font-semibold">
             Register
           </Link>
         </p>
       </div>
     </div>
-  )
+  );
 }
 
-export default Login
+export default Login;
