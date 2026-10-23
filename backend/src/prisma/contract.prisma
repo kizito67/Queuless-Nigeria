@@ -1,0 +1,40 @@
+// use prisma-8
+model User {
+  id             Int                        @id @default(autoincrement())
+  name           String
+  email          String                     @unique
+  phone          String?
+  password       String
+  role           String                     @default("CUSTOMER")
+  organizationId Int?
+  createdAt      TimestamptzString          @default(now())
+  updatedAt      temporal.updatedAtString()
+
+  organization   Organization?              @relation(fields:[organizationId], references:[id])
+}
+
+model Organization {
+  id        Int                        @id @default(autoincrement())
+  name      String
+  category  String
+  state     String
+  email     String?
+  status    String                     @default("PENDING")
+  createdAt TimestamptzString          @default(now())
+  updatedAt temporal.updatedAtString()
+
+  staff     User[]
+  branches  Branch[]
+}
+
+model Branch {
+  id             Int                        @id @default(autoincrement())
+  organizationId Int
+  name           String
+  address        String?
+  state          String
+  createdAt      TimestamptzString          @default(now())
+  updatedAt      temporal.updatedAtString()
+
+  organization   Organization               @relation(fields:[organizationId], references:[id])
+}
