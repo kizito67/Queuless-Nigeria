@@ -5,6 +5,7 @@ const authRoutes = require('./src/routes/auth.routes')
 const protect = require('./src/middleware/auth')
 const requireRole = require('./src/middleware/requireRole')
 const errorHandler = require('./src/middleware/errorHandler')
+const organizationRoutes = require('./src/routes/organization.routes')
 
 const app = express()
 
