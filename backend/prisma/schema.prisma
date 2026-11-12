@@ -13,6 +13,19 @@ enum Role {
   admin
 }
 
+enum OrgStatus {
+  pending
+  verified
+  suspended
+}
+
+enum Plan {
+  starter
+  professional
+  enterprise
+}
+
+
 model User {
   id        String   @id @default(uuid())
   name      String
@@ -20,6 +33,37 @@ model User {
   phone     String?
   password  String
   role      Role     @default(customer)
+  organizations Organization[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model Organization {
+  id           String    @id @default(uuid())
+  name         String
+  category     String
+  address      String
+  state        String
+  lga          String
+  openTime     String
+  closeTime    String
+  contactEmail String
+  contactPhone String?
+  plan         Plan      @default(professional)
+  status       OrgStatus @default(pending)
+  owner        User      @relation(fields: [ownerId], references: [id])
+  ownerId      String
+  services     Service[]
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+}
+
+model Service {
+  id              String       @id @default(uuid())
+  name            String
+  durationMinutes Int          @default(15)
+  organization    Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organizationId  String
+
+  @@unique([organizationId, name])
 }

@@ -1,5 +1,5 @@
 const bcrypt = require('bcryptjs')
-const prisma = require('../config/db')
+const prisma = require('../../config/db')
 const generateToken = require('../utils/generateToken')
 
 
@@ -65,4 +65,8 @@ async function login(req, res) {
     res.json({ token: generateToken(user), user: publicUser(user) })
 }
 
-module.exports = { register, login }
+async function me(req, res) {
+    res.json({ user: req.user })
+}
+
+module.exports = { register, login, me }

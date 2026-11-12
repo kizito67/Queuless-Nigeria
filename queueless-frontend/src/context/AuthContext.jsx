@@ -1,41 +1,45 @@
 import { createContext, useContext, useState } from "react";
 
-// Context lets any component read the logged-in user without passing it down
-// through props at every level.
 const AuthContext = createContext(null);
 
-const STORAGE_KEY = "queueless_user";
+const STORAGE_KEY = "queueless_auth";
 
-function loadUser() {
+function loadAuth() {
   try {
-    return JSON.parse(localStorage.getItem(STORAGE_KEY));
+    return (
+      JSON.parse(localStorage.getItem(STORAGE_KEY)) || {
+        user: null,
+        token: null,
+      }
+    );
   } catch {
-    return null;
+    return { user: null, token: null };
   }
 }
 
 export function AuthProvider({ children }) {
-  // Passing a function to useState means it runs once, on first render only
-  const [user, setUser] = useState(loadUser);
+  const [auth, setAuth] = useState(loadAuth);
 
-  const login = (userData) => {
-    setUser(userData);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(userData));
+  const login = (user, token) => {
+    const next = { user, token };
+    setAuth(next);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
   };
 
   const logout = () => {
-    setUser(null);
+    setAuth({ user: null, token: null });
     localStorage.removeItem(STORAGE_KEY);
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, logout }}>
+    <AuthContext.Provider
+      value={{ user: auth.user, token: auth.token, login, logout }}
+    >
       {children}
     </AuthContext.Provider>
   );
 }
 
-// eslint-disable-next-line react-refresh/only-export-components
 export function useAuth() {
   return useContext(AuthContext);
 }

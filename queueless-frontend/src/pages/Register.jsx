@@ -1,5 +1,7 @@
 import { useState } from "react";
 import { useNavigate, Link, useSearchParams } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
+import { api } from "../api";
 import Button from "../components/Button";
 
 const states = [
@@ -75,6 +77,7 @@ function Field({ label, children }) {
 
 function Register() {
   const navigate = useNavigate();
+  const { login } = useAuth();
   const [searchParams] = useSearchParams();
 
   // Which tab is open. /register?type=business opens the business tab first.
@@ -97,16 +100,23 @@ function Register() {
     setCustomer((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleCustomerSubmit = (e) => {
+  const handleCustomerSubmit = async (e) => {
     e.preventDefault();
     setError("");
     if (!customer.name || !customer.email || !customer.password) {
       setError("Name, email and password are required.");
       return;
     }
-    // TODO: POST to the backend's register endpoint (role: customer)
-    console.log("Registering customer", customer);
-    navigate("/login");
+    try {
+      const { token, user } = await api("/api/auth/register", {
+        method: "POST",
+        body: { ...customer, role: "customer" },
+      });
+      login(user, token);
+      navigate("/dashboard");
+    } catch (err) {
+      setError(err.message);
+    }
   };
 
   // ---- Business form ----

@@ -1,18 +1,24 @@
 const express = require('express')
 const cors = require('cors')
 const morgan = require('morgan')
-const authRoutes = require('./routes/auth.routes')
+const authRoutes = require('./src/routes/auth.routes')
+const protect = require('./src/middleware/auth')
+const requireRole = require('./src/middleware/requireRole')
+const errorHandler = require('./src/middleware/errorHandler')
 
 const app = express()
 
 
 app.use(cors({ origin: ['http://localhost:5173', 'http://localhost:5174'] }))
 
-
 app.use(express.json())
 
-
 app.use(morgan('dev'))
+
+
+app.get('/', (req, res) => {
+    res.json({ message: 'Welcome to the QueueLess API', health: '/api/health' })
+})
 
 
 app.get('/api/health', (req, res) => {
@@ -20,6 +26,12 @@ app.get('/api/health', (req, res) => {
 })
 app.use('/api/auth', authRoutes)
 
+app.get('/api/admin-test', protect, requireRole('admin'), (req, res) => {
+    res.json({ message: `Hello admin ${req.user.name}` })
+})
 
+
+app.use((req, res) => res.status(404).json({ message: 'Route not found.' }))
+app.use(errorHandler)
 
 module.exports = app

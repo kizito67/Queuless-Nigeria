@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import Button from "../components/Button";
 import { useAuth } from "../context/AuthContext";
+import { api } from "../api";
 
 function Login() {
   const navigate = useNavigate();
@@ -9,8 +10,9 @@ function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
 
@@ -19,19 +21,25 @@ function Login() {
       return;
     }
 
-    // DEMO ONLY: until the real backend returns the user's role, we guess it from
-    // the email. admin@test.com -> admin, staff@test.com -> staff, anything else -> customer.
-    // TODO: replace with a real call to the backend's /api/auth/login
-    const lower = email.toLowerCase();
-    const role = lower.includes("admin")
-      ? "admin"
-      : lower.includes("staff")
-        ? "staff"
-        : "customer";
-    login({ name: email.split("@")[0], email, role });
-    navigate(
-      role === "admin" ? "/admin" : role === "staff" ? "/staff" : "/dashboard",
-    );
+    setLoading(true);
+    try {
+      const { token, user } = await api("/api/auth/login", {
+        method: "POST",
+        body: { email, password },
+      });
+      login(user, token);
+      navigate(
+        user.role === "admin"
+          ? "/admin"
+          : user.role === "staff"
+            ? "/staff"
+            : "/dashboard",
+      );
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -73,7 +81,11 @@ function Login() {
             />
           </label>
 
-          <Button text="Log In" type="submit" fullWidth />
+          <Button
+            text={loading ? "Logging in..." : "Log In"}
+            type="submit"
+            fullWidth
+          />
         </form>
 
         <p className="text-center text-[13.5px] text-ink-soft mt-5">
