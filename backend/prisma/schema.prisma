@@ -11,6 +11,7 @@ enum Role {
   customer
   staff
   admin
+  owner
 }
 
 enum OrgStatus {
@@ -25,22 +26,34 @@ enum Plan {
   enterprise
 }
 
+enum AppointmentStatus {
+  upcoming
+  serving
+  completed
+  missed
+  cancelled
+  skipped
+}
 
 model User {
-  id        String   @id @default(uuid())
-  name      String
-  email     String   @unique
-  phone     String?
-  password  String
-  role      Role     @default(customer)
-  organizations Organization[]
-  appointments  Appointment[]
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id                 String         @id @default(uuid())
+  name               String
+  email              String         @unique
+  phone              String?
+  password           String
+  role               Role           @default(customer)
+  isActive           Boolean        @default(true)
+  mustChangePassword Boolean        @default(false)
+  ownedOrganizations Organization[] @relation("OrgOwner")
+  organization       Organization?  @relation("OrgStaff", fields: [organizationId], references: [id])
+  organizationId     String?
+  appointments       Appointment[]
+  createdAt          DateTime       @default(now())
+  updatedAt          DateTime       @updatedAt
 }
 
 model Organization {
-  id           String    @id @default(uuid())
+  id           String        @id @default(uuid())
   name         String
   category     String
   address      String
@@ -50,35 +63,27 @@ model Organization {
   closeTime    String
   contactEmail String
   contactPhone String?
-  plan         Plan      @default(professional)
-  status       OrgStatus @default(pending)
-  queuePaused  Boolean   @default(false)
-  owner        User      @relation(fields: [ownerId], references: [id])
+  plan         Plan          @default(professional)
+  status       OrgStatus     @default(pending)
+  queuePaused  Boolean       @default(false)
+  owner        User          @relation("OrgOwner", fields: [ownerId], references: [id])
   ownerId      String
+  staff        User[]        @relation("OrgStaff")
   services     Service[]
   appointments Appointment[]
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
 }
 
 model Service {
-  id              String       @id @default(uuid())
+  id              String        @id @default(uuid())
   name            String
-  durationMinutes Int          @default(15)
-  organization    Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  durationMinutes Int           @default(15)
+  organization    Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   organizationId  String
+  appointments    Appointment[]
 
-  appointments Appointment[]
   @@unique([organizationId, name])
-}
-
-enum AppointmentStatus {
-  upcoming
-  serving
-  completed
-  missed
-  cancelled
-  skipped
 }
 
 model Appointment {
