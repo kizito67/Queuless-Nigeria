@@ -34,6 +34,7 @@ model User {
   password  String
   role      Role     @default(customer)
   organizations Organization[]
+  appointments  Appointment[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
@@ -51,9 +52,11 @@ model Organization {
   contactPhone String?
   plan         Plan      @default(professional)
   status       OrgStatus @default(pending)
+  queuePaused  Boolean   @default(false)
   owner        User      @relation(fields: [ownerId], references: [id])
   ownerId      String
   services     Service[]
+  appointments Appointment[]
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
 }
@@ -65,5 +68,35 @@ model Service {
   organization    Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   organizationId  String
 
+  appointments Appointment[]
   @@unique([organizationId, name])
+}
+
+enum AppointmentStatus {
+  upcoming
+  serving
+  completed
+  missed
+  cancelled
+  skipped
+}
+
+model Appointment {
+  id             String            @id @default(uuid())
+  queueNumber    Int
+  date           String
+  time           String
+  status         AppointmentStatus @default(upcoming)
+  checkedIn      Boolean           @default(false)
+  customer       User              @relation(fields: [customerId], references: [id])
+  customerId     String
+  organization   Organization      @relation(fields: [organizationId], references: [id])
+  organizationId String
+  service        Service           @relation(fields: [serviceId], references: [id])
+  serviceId      String
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+
+  @@unique([organizationId, date, queueNumber])
+  @@index([customerId])
 }

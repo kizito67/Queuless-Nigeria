@@ -155,7 +155,7 @@ function Register() {
   const removeService = (service) =>
     setServices((prev) => prev.filter((s) => s !== service));
 
-  const handleBusinessSubmit = (e) => {
+  const handleBusinessSubmit = async (e) => {
     e.preventDefault();
     setError("");
 
@@ -175,9 +175,15 @@ function Register() {
       return;
     }
 
-    // TODO: POST to the backend's organization register endpoint
-    console.log("Registering business", { ...business, services });
-    setBusinessSubmitted(true);
+    try {
+      await api("/api/organizations/register", {
+        method: "POST",
+        body: { ...business, services },
+      });
+      setBusinessSubmitted(true);
+    } catch (err) {
+      setError(err.message);
+    }
   };
 
   const switchMode = (next) => {

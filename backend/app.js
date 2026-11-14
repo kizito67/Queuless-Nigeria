@@ -6,6 +6,9 @@ const protect = require('./src/middleware/auth')
 const requireRole = require('./src/middleware/requireRole')
 const errorHandler = require('./src/middleware/errorHandler')
 const organizationRoutes = require('./src/routes/organization.routes')
+const adminRoutes = require('./src/routes/admin.routes')
+const appointmentRoutes = require('./src/routes/appointment.routes')
+const staffRoutes = require('./src/routes/staff.routes')
 
 const app = express()
 
@@ -26,6 +29,11 @@ app.get('/api/health', (req, res) => {
     res.json({ status: 'ok', message: 'QueueLess API is running' })
 })
 app.use('/api/auth', authRoutes)
+app.use('/api/organizations', organizationRoutes)
+app.use('/api/admin', adminRoutes)
+app.use('/api/appointments', appointmentRoutes)
+app.use('/api/staff', staffRoutes)
+
 
 app.get('/api/admin-test', protect, requireRole('admin'), (req, res) => {
     res.json({ message: `Hello admin ${req.user.name}` })
