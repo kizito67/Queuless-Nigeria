@@ -11,7 +11,11 @@ function Login() {
   const [searchParams] = useSearchParams();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
+  const [error, setError] = useState(
+    searchParams.get("expired")
+      ? "Your session has ended. Please log in again."
+      : "",
+  );
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e) => {
