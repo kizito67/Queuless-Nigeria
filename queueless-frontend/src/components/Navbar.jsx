@@ -8,6 +8,7 @@ const accountLinks = {
   customer: { to: "/dashboard", label: "My tickets" },
   staff: { to: "/staff", label: "Staff console" },
   admin: { to: "/admin", label: "Admin" },
+  owner: { to: "/business", label: "Business" },
 };
 
 function Navbar() {

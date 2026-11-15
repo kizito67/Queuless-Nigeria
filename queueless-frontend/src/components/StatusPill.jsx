@@ -9,6 +9,8 @@ const styles = {
   pending: "bg-[#EFEFEF] text-[#6B6B6B]",
   serving: "bg-forest text-white",
   skipped: "bg-[#EFEFEF] text-[#6B6B6B]",
+  active: "bg-[#E4F0E6] text-forest",
+  inactive: "bg-[#EFEFEF] text-[#6B6B6B]",
 };
 
 function StatusPill({ status }) {

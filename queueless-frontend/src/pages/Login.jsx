@@ -3,6 +3,7 @@ import { useNavigate, Link } from "react-router-dom";
 import Button from "../components/Button";
 import { useAuth } from "../context/AuthContext";
 import { api } from "../api";
+import { homeFor } from "../utils/roleHome";
 
 function Login() {
   const navigate = useNavigate();
@@ -29,11 +30,7 @@ function Login() {
       });
       login(user, token);
       navigate(
-        user.role === "admin"
-          ? "/admin"
-          : user.role === "staff"
-            ? "/staff"
-            : "/dashboard",
+        user.mustChangePassword ? "/change-password" : homeFor(user.role),
       );
     } catch (err) {
       setError(err.message);

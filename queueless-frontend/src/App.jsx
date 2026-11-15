@@ -4,11 +4,13 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import Home from "./pages/Home";
 import Organizations from "./pages/Organizations";
 import Dashboard from "./pages/Dashboard";
+import Business from "./pages/Business";
 import StaffConsole from "./pages/StaffConsole";
 import Admin from "./pages/Admin";
 import LiveQueue from "./pages/LiveQueue";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
+import ChangePassword from "./pages/ChangePassword";
 import NotFound from "./pages/NotFound";
 
 function App() {
@@ -21,8 +23,8 @@ function App() {
         <Route path="/queue" element={<LiveQueue />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+        <Route path="/change-password" element={<ChangePassword />} />
 
-        {/* Restricted pages */}
         <Route
           path="/dashboard"
           element={
@@ -32,9 +34,17 @@ function App() {
           }
         />
         <Route
+          path="/business"
+          element={
+            <ProtectedRoute roles={["owner"]}>
+              <Business />
+            </ProtectedRoute>
+          }
+        />
+        <Route
           path="/staff"
           element={
-            <ProtectedRoute roles={["staff", "admin"]}>
+            <ProtectedRoute roles={["staff", "owner"]}>
               <StaffConsole />
             </ProtectedRoute>
           }
@@ -48,7 +58,6 @@ function App() {
           }
         />
 
-        {/* Anything else */}
         <Route path="*" element={<NotFound />} />
       </Routes>
     </>

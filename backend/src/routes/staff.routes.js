@@ -9,7 +9,7 @@ const staffOrganization = require('../middleware/staffOrganization')
 const router = express.Router()
 
 // Logged in, staff (or admin), and linked to a verified organization
-router.use(protect, requireRole('staff', 'admin'), staffOrganization)
+router.use(protect, requireRole('staff', 'owner'), staffOrganization)
 
 router.get('/queue', getQueue)
 router.post('/queue/call-next', callNext)

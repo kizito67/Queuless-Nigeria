@@ -46,8 +46,8 @@ async function registerOrganization(req, res) {
             email,
             phone: contactPhone || null,
             password: hashedPassword,
-            role: 'staff', // set here on the server, never read from the request
-            organizations: {
+            role: 'owner', // set here on the server, never read from the request
+            ownedOrganizations: {
                 create: {
                     name: businessName.trim(),
                     category,
@@ -63,12 +63,12 @@ async function registerOrganization(req, res) {
                 },
             },
         },
-        include: { organizations: { include: { services: true } } },
+        include: { ownedOrganizations: { include: { services: true } } },
     })
 
     res.status(201).json({
         message: 'Application received. We will verify your organization shortly.',
-        organization: { id: user.organizations[0].id, name: user.organizations[0].name, status: 'pending' },
+        organization: { id: user.ownedOrganizations[0].id, name: user.ownedOrganizations[0].name, status: 'pending' },
     })
 }
 

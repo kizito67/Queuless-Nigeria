@@ -9,6 +9,7 @@ const organizationRoutes = require('./src/routes/organization.routes')
 const adminRoutes = require('./src/routes/admin.routes')
 const appointmentRoutes = require('./src/routes/appointment.routes')
 const staffRoutes = require('./src/routes/staff.routes')
+const businessRoutes = require('./src/routes/business.routes')
 
 const app = express()
 
@@ -33,6 +34,7 @@ app.use('/api/organizations', organizationRoutes)
 app.use('/api/admin', adminRoutes)
 app.use('/api/appointments', appointmentRoutes)
 app.use('/api/staff', staffRoutes)
+app.use('/api/business', businessRoutes)
 
 
 app.get('/api/admin-test', protect, requireRole('admin'), (req, res) => {

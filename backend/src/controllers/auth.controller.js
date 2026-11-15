@@ -2,13 +2,13 @@ const bcrypt = require('bcryptjs')
 const prisma = require('../../config/db')
 const generateToken = require('../utils/generateToken')
 
-
 const publicUser = (user) => ({
     id: user.id,
     name: user.name,
     email: user.email,
     phone: user.phone,
     role: user.role,
+    mustChangePassword: user.mustChangePassword,
 })
 
 async function register(req, res) {
@@ -28,10 +28,8 @@ async function register(req, res) {
         return res.status(409).json({ message: 'An account with this email already exists.' })
     }
 
-    // One-way hash: we can check a password against it, but never recover it
     const hashedPassword = await bcrypt.hash(password, 10)
 
-    // Note: role is NOT read from the request. Everyone who registers here is a customer.
     const user = await prisma.user.create({
         data: {
             name: name.trim(),
@@ -55,11 +53,13 @@ async function login(req, res) {
         where: { email: email.trim().toLowerCase() },
     })
 
-    // Same message whether the email or the password is wrong, so attackers
-    // can't use this endpoint to find out which emails have accounts
     const passwordMatches = user && (await bcrypt.compare(password, user.password))
     if (!passwordMatches) {
         return res.status(401).json({ message: 'Invalid email or password.' })
+    }
+
+    if (!user.isActive) {
+        return res.status(403).json({ message: 'This account has been deactivated. Contact your organization.' })
     }
 
     res.json({ token: generateToken(user), user: publicUser(user) })
@@ -69,4 +69,30 @@ async function me(req, res) {
     res.json({ user: req.user })
 }
 
-module.exports = { register, login, me }
+async function changePassword(req, res) {
+    const { currentPassword, newPassword } = req.body || {}
+
+    if (!currentPassword || !newPassword) {
+        return res.status(400).json({ message: 'Current and new password are required.' })
+    }
+    if (newPassword.length < 8) {
+        return res.status(400).json({ message: 'New password must be at least 8 characters.' })
+    }
+    if (newPassword === currentPassword) {
+        return res.status(400).json({ message: 'New password must be different from the current one.' })
+    }
+
+    const user = await prisma.user.findUnique({ where: { id: req.user.id } })
+    if (!(await bcrypt.compare(currentPassword, user.password))) {
+        return res.status(401).json({ message: 'Current password is incorrect.' })
+    }
+
+    const updated = await prisma.user.update({
+        where: { id: user.id },
+        data: { password: await bcrypt.hash(newPassword, 10), mustChangePassword: false },
+    })
+
+    res.json({ token: generateToken(updated), user: publicUser(updated) })
+}
+
+module.exports = { register, login, me, changePassword }
