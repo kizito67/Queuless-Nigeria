@@ -2,6 +2,7 @@ const bcrypt = require('bcryptjs')
 const prisma = require('../../config/db')
 
 const PLANS = ['starter', 'professional', 'enterprise']
+const TIME = /^([01]\d|2[0-3]):[0-5]\d$/
 
 async function registerOrganization(req, res) {
     const {
@@ -13,6 +14,13 @@ async function registerOrganization(req, res) {
     const required = { businessName, category, address, state, lga, openTime, closeTime, contactEmail, password }
     if (Object.values(required).some((v) => !v)) {
         return res.status(400).json({ message: 'Please fill in every required field.' })
+    }
+
+    if (!TIME.test(openTime) || !TIME.test(closeTime)) {
+        return res.status(400).json({ message: 'Invalid opening or closing time.' })
+    }
+    if (closeTime <= openTime) {
+        return res.status(400).json({ message: 'Closing time must be after opening time.' })
     }
 
     // Trim, drop blanks and duplicates

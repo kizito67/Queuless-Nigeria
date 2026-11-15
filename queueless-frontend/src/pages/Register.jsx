@@ -175,6 +175,11 @@ function Register() {
       return;
     }
 
+    if (business.closeTime <= business.openTime) {
+      setError("Closing time must be after opening time.");
+      return;
+    }
+
     try {
       await api("/api/organizations/register", {
         method: "POST",
