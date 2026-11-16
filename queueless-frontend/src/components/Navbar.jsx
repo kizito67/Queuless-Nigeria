@@ -64,6 +64,14 @@ function Navbar() {
         <div className="hidden md:flex items-center gap-5">
           {user ? (
             <>
+              {user.role === "customer" && (
+                <Link
+                  to="/book"
+                  className="text-sm font-semibold text-forest hover:underline"
+                >
+                  Book appointment
+                </Link>
+              )}
               <Link
                 to={account.to}
                 className="text-sm font-semibold text-forest hover:underline"
@@ -136,6 +144,15 @@ function Navbar() {
           <div className="border-t border-line pt-4 flex flex-col gap-4">
             {user ? (
               <>
+                {user.role === "customer" && (
+                  <Link
+                    to="/book"
+                    onClick={closeMenu}
+                    className="text-forest font-semibold"
+                  >
+                    Book appointment
+                  </Link>
+                )}
                 <Link
                   to={account.to}
                   onClick={closeMenu}

@@ -68,8 +68,7 @@ function Dashboard() {
                 bottomRight={{ label: "Time", value: active.time }}
               />
               <Link
-                to="/queue"
-                state={active}
+                to={`/queue/${active.id}`}
                 className="inline-block mt-4 text-sm font-semibold text-forest hover:underline"
               >
                 Watch the live queue →
@@ -79,9 +78,9 @@ function Dashboard() {
             <div className="border-[1.5px] border-dashed border-line-strong rounded-2xl p-8 text-center text-ink-soft text-sm">
               {loading ? "Loading..." : "You have no active ticket. "}
               {!loading && (
-                <a href="/#book" className="text-forest font-semibold">
+                <Link to="/book" className="text-forest font-semibold">
                   Book one
-                </a>
+                </Link>
               )}
             </div>
           )}

@@ -1,5 +1,8 @@
 const bcrypt = require('bcryptjs')
 const prisma = require('../../config/db')
+const { formatQueueNumber } = require('../utils/queueNumber')
+const { todayLagos } = require('../utils/time')
+const { isEmail } = require('../utils/validate')
 
 const PLANS = ['starter', 'professional', 'enterprise']
 const TIME = /^([01]\d|2[0-3]):[0-5]\d$/
@@ -12,8 +15,14 @@ async function registerOrganization(req, res) {
     } = req.body || {}
 
     const required = { businessName, category, address, state, lga, openTime, closeTime, contactEmail, password }
-    if (Object.values(required).some((v) => !v)) {
+    if (Object.values(required).some((v) => typeof v !== 'string' || !v.trim())) {
         return res.status(400).json({ message: 'Please fill in every required field.' })
+    }
+    if (!isEmail(contactEmail)) {
+        return res.status(400).json({ message: 'Enter a valid contact email.' })
+    }
+    if (businessName.length > 120 || address.length > 200) {
+        return res.status(400).json({ message: 'Business name or address is too long.' })
     }
 
     if (!TIME.test(openTime) || !TIME.test(closeTime)) {
@@ -29,8 +38,8 @@ async function registerOrganization(req, res) {
         return res.status(400).json({ message: 'Add at least one service.' })
     }
 
-    if (password.length < 8) {
-        return res.status(400).json({ message: 'Password must be at least 8 characters.' })
+    if (password.length < 8 || password.length > 72) {
+        return res.status(400).json({ message: 'Password must be 8 to 72 characters.' })
     }
 
     const planValue = String(plan || 'professional').toLowerCase()
@@ -100,4 +109,41 @@ async function listOrganizations(req, res) {
     res.json({ organizations })
 }
 
-module.exports = { registerOrganization, listOrganizations }
+// Public: shows queue numbers and counts only, never names
+async function getBoard(req, res) {
+    const date = todayLagos()
+
+    // The verified organization with the most bookings, as long as it has some today
+    const org = await prisma.organization.findFirst({
+        where: {
+            status: 'verified',
+            appointments: { some: { date, status: { not: 'cancelled' } } },
+        },
+        orderBy: { appointments: { _count: 'desc' } },
+        select: { id: true, name: true },
+    })
+
+    if (!org) return res.json({ board: null })
+
+    const where = { organizationId: org.id, date }
+    const [serving, next, waitingCount] = await Promise.all([
+        prisma.appointment.findFirst({ where: { ...where, status: 'serving' }, select: { queueNumber: true } }),
+        prisma.appointment.findFirst({
+            where: { ...where, status: 'upcoming' },
+            orderBy: { queueNumber: 'asc' },
+            select: { queueNumber: true },
+        }),
+        prisma.appointment.count({ where: { ...where, status: 'upcoming' } }),
+    ])
+
+    res.json({
+        board: {
+            organization: org.name,
+            nowServing: serving ? formatQueueNumber(serving.queueNumber) : null,
+            nextUp: next ? formatQueueNumber(next.queueNumber) : null,
+            peopleWaiting: waitingCount,
+        },
+    })
+}
+
+module.exports = { registerOrganization, listOrganizations, getBoard }

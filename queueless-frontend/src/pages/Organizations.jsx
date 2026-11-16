@@ -1,7 +1,9 @@
 import { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
 import PageHero from "../components/PageHero";
 import StatusPill from "../components/StatusPill";
 import { api } from "../api";
+import { useAuth } from "../context/AuthContext";
 
 const categories = [
   "All",
@@ -17,6 +19,7 @@ const categories = [
 ];
 
 function Organizations() {
+  const { user } = useAuth();
   const [organizations, setOrganizations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -116,12 +119,21 @@ function Organizations() {
                 <span className="font-mono text-[11px] uppercase tracking-wide text-forest-light font-bold">
                   {org.category}
                 </span>
-                <a
-                  href="/#book"
-                  className="text-sm font-semibold text-forest hover:underline"
-                >
-                  Book →
-                </a>
+                {user?.role === "customer" ? (
+                  <Link
+                    to={`/book?organization=${org.id}`}
+                    className="text-sm font-semibold text-forest hover:underline"
+                  >
+                    Book →
+                  </Link>
+                ) : (
+                  <a
+                    href="/#book"
+                    className="text-sm font-semibold text-forest hover:underline"
+                  >
+                    Book →
+                  </a>
+                )}
               </div>
             </div>
           ))}

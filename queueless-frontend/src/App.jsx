@@ -8,6 +8,7 @@ import Business from "./pages/Business";
 import StaffConsole from "./pages/StaffConsole";
 import Admin from "./pages/Admin";
 import LiveQueue from "./pages/LiveQueue";
+import Booking from "./pages/Booking";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import ChangePassword from "./pages/ChangePassword";
@@ -20,10 +21,34 @@ function App() {
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/organizations" element={<Organizations />} />
-        <Route path="/queue" element={<LiveQueue />} />
+        <Route
+          path="/queue"
+          element={
+            <ProtectedRoute roles={["customer"]}>
+              <LiveQueue />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/queue/:id"
+          element={
+            <ProtectedRoute roles={["customer"]}>
+              <LiveQueue />
+            </ProtectedRoute>
+          }
+        />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/change-password" element={<ChangePassword />} />
+
+        <Route
+          path="/book"
+          element={
+            <ProtectedRoute roles={["customer"]}>
+              <Booking />
+            </ProtectedRoute>
+          }
+        />
 
         <Route
           path="/dashboard"

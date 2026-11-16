@@ -8,9 +8,14 @@ async function protect(req, res, next) {
         return res.status(401).json({ message: 'Not logged in.' })
     }
 
+    const token = header.slice('Bearer '.length).trim()
+    if (!token) {
+        return res.status(401).json({ message: 'Invalid or expired token.' })
+    }
+
     let payload
     try {
-        payload = jwt.verify(header.split(' ')[1], process.env.JWT_SECRET)
+        payload = jwt.verify(token, process.env.JWT_SECRET, { algorithms: ['HS256'] })
     } catch {
         return res.status(401).json({ message: 'Invalid or expired token.' })
     }

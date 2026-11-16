@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import PageHero from "../components/PageHero";
 import { useAuth } from "../context/AuthContext";
 import { api } from "../api";
+import { connectSocket } from "../socket";
 
 function StaffConsole() {
   const { token } = useAuth();
@@ -23,9 +24,20 @@ function StaffConsole() {
   // Load now, then every 10 seconds. A stopgap until the live updates arrive.
   useEffect(() => {
     load();
-    const id = setInterval(load, 10000);
-    return () => clearInterval(id);
-  }, [load]);
+
+    const socket = connectSocket(token);
+    socket.on("connect", () => {
+      socket.emit("staff:watch");
+      load();
+    });
+    socket.on("queue:changed", load); // a booking, cancellation or another staff member's action
+
+    const poll = setInterval(load, 30000); // safety net
+    return () => {
+      clearInterval(poll);
+      socket.disconnect();
+    };
+  }, [load, token]);
 
   // Run an action on the server, then reload the queue so the screen shows
   // what the server actually has, not what we guess happened.

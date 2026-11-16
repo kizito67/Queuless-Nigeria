@@ -1,9 +1,11 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import Button from "../components/Button";
 import Ticket from "../components/Ticket";
 import QueueBoard from "../components/QueueBoard";
 import BookAppointment from "./BookAppointment";
+import { api } from "../api";
+import { useAuth } from "../context/AuthContext";
 
 const stats = [
   { value: "2.4 hrs", label: "avg. time saved per visit" },
@@ -86,6 +88,20 @@ const pricing = [
 function Home() {
   // Which pricing plan is selected (Professional is the featured one)
   const [plan, setPlan] = useState("Professional");
+  const [board, setBoard] = useState(null);
+  const { user } = useAuth();
+  const isCustomer = user?.role === "customer";
+
+  // The public board has no login, so it refreshes by checking every 15 seconds
+  useEffect(() => {
+    const load = () =>
+      api("/api/organizations/board")
+        .then((data) => setBoard(data.board))
+        .catch(() => {});
+    load();
+    const id = setInterval(load, 15000);
+    return () => clearInterval(id);
+  }, []);
 
   return (
     <div>
@@ -107,9 +123,15 @@ function Home() {
               time, and arrive right when it's your turn.
             </p>
             <div className="flex flex-wrap gap-3.5 mb-12">
-              <a href="#book">
-                <Button text="Book an appointment" />
-              </a>
+              {isCustomer ? (
+                <Link to="/book">
+                  <Button text="Book an appointment" />
+                </Link>
+              ) : (
+                <a href="#book">
+                  <Button text="Book an appointment" />
+                </a>
+              )}
               <a href="#business">
                 <Button text="Register your business" variant="ghost" />
               </a>
@@ -165,9 +187,15 @@ function Home() {
                 <p className="text-[13.5px] text-ink-soft mb-3.5">{s.org}</p>
                 <div className="flex justify-between border-t border-line pt-3 font-mono text-[11.5px] text-forest-light">
                   <span>{s.time}</span>
-                  <a href="#book" className="font-semibold hover:underline">
-                    Book →
-                  </a>
+                  {isCustomer ? (
+                    <Link to="/book" className="font-semibold hover:underline">
+                      Book →
+                    </Link>
+                  ) : (
+                    <a href="#book" className="font-semibold hover:underline">
+                      Book →
+                    </a>
+                  )}
                 </div>
               </div>
             ))}
@@ -176,9 +204,11 @@ function Home() {
       </section>
 
       {/* BOOKING — reuses the form built earlier as a section of the homepage */}
-      <div id="book">
-        <BookAppointment />
-      </div>
+      {!user && (
+        <div id="book">
+          <BookAppointment />
+        </div>
+      )}
 
       {/* LIVE DASHBOARD PREVIEW */}
       <section className="bg-ink py-20">
@@ -189,12 +219,19 @@ function Home() {
           <h2 className="font-display font-semibold text-3xl text-white mb-10">
             Watch the queue move.
           </h2>
-          <QueueBoard
-            orgName="First City Bank — Wuse II"
-            nowServing="A-095"
-            nextUp="A-096"
-            peopleWaiting="0"
-          />
+          {board ? (
+            <QueueBoard
+              orgName={board.organization}
+              nowServing={board.nowServing || "—"}
+              nextUp={board.nextUp || "—"}
+              peopleWaiting={String(board.peopleWaiting)}
+            />
+          ) : (
+            <p className="text-[#B9C9BC] text-sm">
+              No live queues right now. This board shows real numbers once an
+              organization has bookings today.
+            </p>
+          )}
         </div>
       </section>
 

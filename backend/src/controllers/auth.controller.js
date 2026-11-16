@@ -1,6 +1,7 @@
 const bcrypt = require('bcryptjs')
 const prisma = require('../../config/db')
 const generateToken = require('../utils/generateToken')
+const { isEmail } = require('../utils/validate')
 
 const publicUser = (user) => ({
     id: user.id,
@@ -14,11 +15,20 @@ const publicUser = (user) => ({
 async function register(req, res) {
     const { name, email, phone, password } = req.body || {}
 
-    if (!name || !email || !password) {
+    if (
+        typeof name !== 'string' || typeof email !== 'string' || typeof password !== 'string' ||
+        !name.trim() || !email.trim() || !password
+    ) {
         return res.status(400).json({ message: 'Name, email and password are required.' })
     }
-    if (password.length < 8) {
-        return res.status(400).json({ message: 'Password must be at least 8 characters.' })
+    if (name.length > 100) {
+        return res.status(400).json({ message: 'Name is too long.' })
+    }
+    if (!isEmail(email)) {
+        return res.status(400).json({ message: 'Enter a valid email address.' })
+    }
+    if (password.length < 8 || password.length > 72) {
+        return res.status(400).json({ message: 'Password must be 8 to 72 characters.' })
     }
 
     const normalizedEmail = email.trim().toLowerCase()
@@ -45,7 +55,7 @@ async function register(req, res) {
 async function login(req, res) {
     const { email, password } = req.body || {}
 
-    if (!email || !password) {
+    if (typeof email !== 'string' || typeof password !== 'string' || !email || !password) {
         return res.status(400).json({ message: 'Email and password are required.' })
     }
 
@@ -75,8 +85,9 @@ async function changePassword(req, res) {
     if (!currentPassword || !newPassword) {
         return res.status(400).json({ message: 'Current and new password are required.' })
     }
-    if (newPassword.length < 8) {
-        return res.status(400).json({ message: 'New password must be at least 8 characters.' })
+    if (typeof currentPassword !== 'string' || typeof newPassword !== 'string' ||
+        newPassword.length < 8 || newPassword.length > 72) {
+        return res.status(400).json({ message: 'New password must be 8 to 72 characters.' })
     }
     if (newPassword === currentPassword) {
         return res.status(400).json({ message: 'New password must be different from the current one.' })

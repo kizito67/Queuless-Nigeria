@@ -1,7 +1,9 @@
 const bcrypt = require('bcryptjs')
 const prisma = require('../../config/db')
+const { isEmail } = require('../utils/validate')
 const generateTempPassword = require('../utils/tempPassword')
 const { todayLagos } = require('../utils/time')
+
 
 const staffSelect = {
     id: true,
@@ -50,6 +52,9 @@ async function addStaff(req, res) {
     const { name, email, phone } = req.body || {}
     if (!name || !email) {
         return res.status(400).json({ message: 'Name and email are required.' })
+    }
+    if (typeof name !== 'string' || typeof email !== 'string' || !isEmail(email) || name.length > 100) {
+        return res.status(400).json({ message: 'Enter a valid name and email.' })
     }
 
     const normalizedEmail = email.trim().toLowerCase()

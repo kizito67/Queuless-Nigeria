@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import Button from "../components/Button";
 import { useAuth } from "../context/AuthContext";
 import { api } from "../api";
@@ -12,10 +12,11 @@ const steps = [
 
 function BookAppointment() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { user, token } = useAuth();
 
   const [organizations, setOrganizations] = useState([]);
-  const [orgId, setOrgId] = useState("");
+  const [orgId, setOrgId] = useState(() => searchParams.get("organization") || "");
   const [serviceId, setServiceId] = useState("");
   const [date, setDate] = useState("");
   const [time, setTime] = useState("");
@@ -47,7 +48,7 @@ function BookAppointment() {
         body: { organizationId: orgId, serviceId, date, time },
       });
       // The server assigned the queue number; the live queue page displays it
-      navigate("/queue", { state: appointment });
+      navigate(`/queue/${appointment.id}`);
     } catch (err) {
       setError(err.message);
     } finally {

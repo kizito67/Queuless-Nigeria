@@ -1,6 +1,7 @@
 const prisma = require('../../config/db')
 const { formatQueueNumber } = require('../utils/queueNumber')
 const { todayLagos } = require('../utils/time')
+const { queueChanged } = require('../sockets')
 
 const include = {
     customer: { select: { name: true } },
@@ -69,6 +70,7 @@ async function callNext(req, res) {
     if (!next) {
         return res.status(409).json({ message: 'No checked-in customers are waiting.' })
     }
+    queueChanged(org.id, todayLagos())
     res.json({ serving: toDto(next) })
 }
 
@@ -80,6 +82,7 @@ async function completeServing(req, res) {
     if (result.count === 0) {
         return res.status(409).json({ message: 'No one is being served right now.' })
     }
+    queueChanged(req.organization.id, todayLagos())
     res.json({ ok: true })
 }
 
@@ -93,6 +96,7 @@ async function setPaused(req, res) {
         data: { queuePaused: paused },
         select: { queuePaused: true },
     })
+    queueChanged(req.organization.id, todayLagos())
     res.json(org)
 }
 
@@ -123,6 +127,7 @@ async function appointmentAction(req, res) {
     if (result.count === 0) {
         return res.status(404).json({ message: 'Appointment not found, or it cannot be changed.' })
     }
+    queueChanged(req.organization.id, todayLagos())
     res.json({ ok: true })
 }
 

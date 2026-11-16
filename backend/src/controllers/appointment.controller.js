@@ -1,6 +1,7 @@
 const prisma = require('../../config/db')
 const { formatQueueNumber } = require('../utils/queueNumber')
 const { todayLagos, nowLagos } = require('../utils/time')
+const { queueChanged } = require('../sockets')
 
 
 const include = {
@@ -72,6 +73,7 @@ async function createAppointment(req, res) {
                 },
                 include,
             })
+            queueChanged(organizationId, date)
             return res.status(201).json({ appointment: toDto(appointment) })
         } catch (err) {
             if (err.code !== 'P2002') throw err
@@ -107,7 +109,73 @@ async function cancelAppointment(req, res) {
         data: { status: 'cancelled' },
         include,
     })
+    queueChanged(updated.organizationId, updated.date)
     res.json({ appointment: toDto(updated) })
 }
 
-module.exports = { createAppointment, listMyAppointments, cancelAppointment }
+async function getStatus(req, res) {
+    const appointment = await prisma.appointment.findUnique({
+        where: { id: req.params.id },
+        include: {
+            organization: { select: { name: true, queuePaused: true } },
+            service: { select: { name: true } },
+        },
+    })
+
+    // Same answer for "doesn't exist" and "not yours"
+    if (!appointment || appointment.customerId !== req.user.id) {
+        return res.status(404).json({ message: 'Appointment not found.' })
+    }
+
+    const sameQueue = { organizationId: appointment.organizationId, date: appointment.date }
+    const waiting = appointment.status === 'upcoming'
+
+    const [serving, ahead] = await Promise.all([
+        prisma.appointment.findFirst({
+            where: { ...sameQueue, status: 'serving' },
+            select: { queueNumber: true },
+        }),
+        // Lower numbers still waiting or at the desk are ahead of you
+        waiting
+            ? prisma.appointment.findMany({
+                where: {
+                    ...sameQueue,
+                    queueNumber: { lt: appointment.queueNumber },
+                    status: { in: ['upcoming', 'serving'] },
+                },
+                select: { service: { select: { durationMinutes: true } } },
+            })
+            : [],
+    ])
+
+    res.json({
+        appointment: { ...toDto(appointment), checkedIn: appointment.checkedIn },
+        nowServing: serving ? formatQueueNumber(serving.queueNumber) : null,
+        paused: appointment.organization.queuePaused,
+        peopleAhead: ahead.length,
+        // Rough estimate: the typical duration of each service ahead of you, added up
+        estimatedWaitMinutes: ahead.reduce((sum, a) => sum + a.service.durationMinutes, 0),
+    })
+}
+
+async function checkIn(req, res) {
+    const appointment = await prisma.appointment.findUnique({ where: { id: req.params.id } })
+
+    if (!appointment || appointment.customerId !== req.user.id) {
+        return res.status(404).json({ message: 'Appointment not found.' })
+    }
+    if (appointment.status !== 'upcoming') {
+        return res.status(400).json({ message: 'Only upcoming appointments can be checked in.' })
+    }
+    if (appointment.date !== todayLagos()) {
+        return res.status(400).json({ message: 'You can check in on the day of your appointment.' })
+    }
+
+    if (!appointment.checkedIn) {
+        await prisma.appointment.update({ where: { id: appointment.id }, data: { checkedIn: true } })
+        queueChanged(appointment.organizationId, appointment.date) // staff see it at once
+    }
+    res.json({ ok: true })
+}
+
+module.exports = { createAppointment, listMyAppointments, cancelAppointment, getStatus, checkIn }
