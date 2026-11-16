@@ -38,7 +38,7 @@ async function createAppointment(req, res) {
     // The service must belong to the organization the client named, and that
     // organization must be verified. Never trust ids from the request on their own.
     const service = await prisma.service.findFirst({
-        where: { id: serviceId, organizationId },
+        where: { id: serviceId, organizationId, isActive: true },
         include: { organization: true },
     })
     if (!service || service.organization.status !== 'verified') {

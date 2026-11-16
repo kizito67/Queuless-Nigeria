@@ -92,7 +92,7 @@ async function listOrganizations(req, res) {
             lga: true,
             openTime: true,
             closeTime: true,
-            services: { select: { id: true, name: true, durationMinutes: true } },
+            services: { where: { isActive: true }, select: { id: true, name: true, durationMinutes: true } },
         },
         orderBy: { name: 'asc' },
     })

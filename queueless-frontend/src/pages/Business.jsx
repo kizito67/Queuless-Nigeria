@@ -9,6 +9,7 @@ import { api } from "../api";
 const tabs = [
   { id: "overview", label: "Overview" },
   { id: "staff", label: "Staff" },
+  { id: "services", label: "Services" },
 ];
 
 const inputStyles =
@@ -322,6 +323,246 @@ function StaffTab({ token }) {
   );
 }
 
+function ServicesTab({ token }) {
+  const [services, setServices] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [form, setForm] = useState({ name: "", durationMinutes: "15" });
+  const [saving, setSaving] = useState(false);
+  const [editing, setEditing] = useState(null); // { id, name, durationMinutes } while a row is being edited
+
+  const load = useCallback(() => {
+    api("/api/business/services", { token })
+      .then((data) => setServices(data.services))
+      .catch((err) => setError(err.message))
+      .finally(() => setLoading(false));
+  }, [token]);
+
+  useEffect(() => {
+    load();
+  }, [load]);
+
+  const handleAdd = async (e) => {
+    e.preventDefault();
+    setError("");
+    if (!form.name.trim()) {
+      setError("Service name is required.");
+      return;
+    }
+    setSaving(true);
+    try {
+      await api("/api/business/services", {
+        method: "POST",
+        token,
+        body: {
+          name: form.name,
+          durationMinutes: Number(form.durationMinutes),
+        },
+      });
+      setForm({ name: "", durationMinutes: "15" });
+      load();
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const saveEdit = async () => {
+    setError("");
+    try {
+      await api(`/api/business/services/${editing.id}`, {
+        method: "PATCH",
+        token,
+        body: {
+          name: editing.name,
+          durationMinutes: Number(editing.durationMinutes),
+        },
+      });
+      setEditing(null);
+      load();
+    } catch (err) {
+      setError(err.message);
+    }
+  };
+
+  const toggleActive = async (service) => {
+    setError("");
+    try {
+      await api(`/api/business/services/${service.id}`, {
+        method: "PATCH",
+        token,
+        body: { isActive: !service.isActive },
+      });
+      load();
+    } catch (err) {
+      setError(err.message);
+    }
+  };
+
+  const th =
+    "text-left px-5 py-3.5 font-mono text-[11px] tracking-wide uppercase text-ink-soft border-b border-line";
+  const td = "px-5 py-[15px] border-b border-line text-sm";
+  const smallBtn =
+    "border-[1.5px] border-line-strong rounded-lg px-3 py-1.5 text-xs font-semibold hover:border-forest hover:text-forest";
+
+  return (
+    <div className="grid lg:grid-cols-[340px_1fr] gap-8 items-start">
+      <div>
+        <h2 className="text-[15px] font-bold mb-4">Add a service</h2>
+        <form
+          onSubmit={handleAdd}
+          className="bg-paper-raised border border-line rounded-2xl p-6 flex flex-col gap-4"
+        >
+          <label className="flex flex-col gap-1.5 text-[13px] font-semibold text-ink-soft">
+            Service name
+            <input
+              value={form.name}
+              onChange={(e) => setForm({ ...form, name: e.target.value })}
+              placeholder="e.g. Cash Withdrawal"
+              className={inputStyles}
+            />
+          </label>
+          <label className="flex flex-col gap-1.5 text-[13px] font-semibold text-ink-soft">
+            Typical duration (minutes)
+            <input
+              type="number"
+              min="1"
+              max="240"
+              value={form.durationMinutes}
+              onChange={(e) =>
+                setForm({ ...form, durationMinutes: e.target.value })
+              }
+              className={inputStyles}
+            />
+          </label>
+          <Button
+            text={saving ? "Adding..." : "Add service"}
+            type="submit"
+            fullWidth
+          />
+        </form>
+      </div>
+
+      <div>
+        {error && (
+          <p className="text-sm text-[#B8402F] bg-[#F6E3E1] rounded-lg p-2.5 mb-4">
+            {error}
+          </p>
+        )}
+
+        <h2 className="text-[15px] font-bold mb-4">Your services</h2>
+        <div className="bg-paper-raised border border-line rounded-2xl overflow-x-auto">
+          {loading ? (
+            <p className="p-5 text-sm text-ink-soft">Loading...</p>
+          ) : services.length === 0 ? (
+            <p className="p-5 text-sm text-ink-soft">No services yet.</p>
+          ) : (
+            <table className="w-full border-collapse">
+              <thead className="bg-paper">
+                <tr>
+                  <th className={th}>Service</th>
+                  <th className={th}>Duration</th>
+                  <th className={th}>Status</th>
+                  <th className={th}></th>
+                </tr>
+              </thead>
+              <tbody>
+                {services.map((s) => {
+                  const isEditing = editing?.id === s.id;
+                  return (
+                    <tr key={s.id} className={s.isActive ? "" : "opacity-60"}>
+                      <td className={td}>
+                        {isEditing ? (
+                          <input
+                            value={editing.name}
+                            onChange={(e) =>
+                              setEditing({ ...editing, name: e.target.value })
+                            }
+                            className={`${inputStyles} w-full`}
+                          />
+                        ) : (
+                          <span className="font-semibold">{s.name}</span>
+                        )}
+                      </td>
+                      <td className={td}>
+                        {isEditing ? (
+                          <input
+                            type="number"
+                            min="1"
+                            max="240"
+                            value={editing.durationMinutes}
+                            onChange={(e) =>
+                              setEditing({
+                                ...editing,
+                                durationMinutes: e.target.value,
+                              })
+                            }
+                            className={`${inputStyles} w-24`}
+                          />
+                        ) : (
+                          `${s.durationMinutes} min`
+                        )}
+                      </td>
+                      <td className={td}>
+                        <StatusPill
+                          status={s.isActive ? "active" : "inactive"}
+                        />
+                      </td>
+                      <td className={td}>
+                        <div className="flex gap-2 justify-end">
+                          {isEditing ? (
+                            <>
+                              <button onClick={saveEdit} className={smallBtn}>
+                                Save
+                              </button>
+                              <button
+                                onClick={() => setEditing(null)}
+                                className={smallBtn}
+                              >
+                                Cancel
+                              </button>
+                            </>
+                          ) : (
+                            <>
+                              <button
+                                onClick={() =>
+                                  setEditing({
+                                    id: s.id,
+                                    name: s.name,
+                                    durationMinutes: String(s.durationMinutes),
+                                  })
+                                }
+                                className={smallBtn}
+                              >
+                                Edit
+                              </button>
+                              <button
+                                onClick={() => toggleActive(s)}
+                                className={smallBtn}
+                              >
+                                {s.isActive ? "Archive" : "Restore"}
+                              </button>
+                            </>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          )}
+        </div>
+        <p className="text-xs text-ink-soft mt-3">
+          Archived services disappear from the booking form but stay in your
+          history. Restore one anytime.
+        </p>
+      </div>
+    </div>
+  );
+}
+
 function Business() {
   const { token } = useAuth();
   const [tab, setTab] = useState("overview");
@@ -352,6 +593,7 @@ function Business() {
 
         {tab === "overview" && <Overview token={token} />}
         {tab === "staff" && <StaffTab token={token} />}
+        {tab === "services" && <ServicesTab token={token} />}
       </div>
     </div>
   );

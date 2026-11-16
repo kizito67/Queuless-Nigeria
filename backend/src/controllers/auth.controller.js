@@ -84,7 +84,7 @@ async function changePassword(req, res) {
 
     const user = await prisma.user.findUnique({ where: { id: req.user.id } })
     if (!(await bcrypt.compare(currentPassword, user.password))) {
-        return res.status(401).json({ message: 'Current password is incorrect.' })
+        return res.status(400).json({ message: 'Current password is incorrect.' })
     }
 
     const updated = await prisma.user.update({

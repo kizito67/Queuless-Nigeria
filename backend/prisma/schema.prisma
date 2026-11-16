@@ -79,6 +79,7 @@ model Service {
   id              String        @id @default(uuid())
   name            String
   durationMinutes Int           @default(15)
+  isActive        Boolean       @default(true)
   organization    Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   organizationId  String
   appointments    Appointment[]

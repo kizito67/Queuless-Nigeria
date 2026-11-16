@@ -19,7 +19,7 @@ async function getOverview(req, res) {
 
     const [staffCount, servicesCount, bookingsToday, servedToday] = await Promise.all([
         prisma.user.count({ where: { organizationId: org.id, role: 'staff', isActive: true } }),
-        prisma.service.count({ where: { organizationId: org.id } }),
+        prisma.service.count({ where: { organizationId: org.id, isActive: true } }),
         prisma.appointment.count({ where: { organizationId: org.id, date: today, status: { not: 'cancelled' } } }),
         prisma.appointment.count({ where: { organizationId: org.id, date: today, status: 'completed' } }),
     ])
@@ -107,4 +107,115 @@ async function resetStaffPassword(req, res) {
     res.json({ temporaryPassword })
 }
 
-module.exports = { getOverview, listStaff, addStaff, updateStaff, resetStaffPassword }
+const serviceSelect = { id: true, name: true, durationMinutes: true, isActive: true }
+
+function parseDuration(value) {
+    const n = Number(value)
+    return Number.isInteger(n) && n >= 1 && n <= 240 ? n : null
+}
+
+async function listServices(req, res) {
+    const services = await prisma.service.findMany({
+        where: { organizationId: req.organization.id },
+        select: serviceSelect,
+        orderBy: [{ isActive: 'desc' }, { name: 'asc' }],
+    })
+    res.json({ services })
+}
+
+async function addService(req, res) {
+    const name = String(req.body?.name || '').trim()
+    const durationMinutes = parseDuration(req.body?.durationMinutes ?? 15)
+
+    if (!name) {
+        return res.status(400).json({ message: 'Service name is required.' })
+    }
+    if (durationMinutes === null) {
+        return res.status(400).json({ message: 'Duration must be a whole number of minutes, from 1 to 240.' })
+    }
+
+    const organizationId = req.organization.id
+    const existing = await prisma.service.findUnique({
+        where: { organizationId_name: { organizationId, name } },
+    })
+
+    if (existing?.isActive) {
+        return res.status(409).json({ message: 'You already have a service with that name.' })
+    }
+
+    // An archived service with the same name is brought back instead of duplicated
+    const service = existing
+        ? await prisma.service.update({
+            where: { id: existing.id },
+            data: { isActive: true, durationMinutes },
+            select: serviceSelect,
+        })
+        : await prisma.service.create({
+            data: { name, durationMinutes, organizationId },
+            select: serviceSelect,
+        })
+
+    res.status(201).json({ service })
+}
+
+async function updateService(req, res) {
+    const data = {}
+
+    if (req.body?.name !== undefined) {
+        const name = String(req.body.name).trim()
+        if (!name) return res.status(400).json({ message: 'Service name cannot be empty.' })
+        data.name = name
+    }
+    if (req.body?.durationMinutes !== undefined) {
+        const duration = parseDuration(req.body.durationMinutes)
+        if (duration === null) {
+            return res.status(400).json({ message: 'Duration must be a whole number of minutes, from 1 to 240.' })
+        }
+        data.durationMinutes = duration
+    }
+    if (req.body?.isActive !== undefined) {
+        if (typeof req.body.isActive !== 'boolean') {
+            return res.status(400).json({ message: 'isActive must be true or false.' })
+        }
+        data.isActive = req.body.isActive
+    }
+    if (Object.keys(data).length === 0) {
+        return res.status(400).json({ message: 'Nothing to update.' })
+    }
+
+    const organizationId = req.organization.id
+
+    // Customers can't book an organization with no services, so keep at least one active
+    if (data.isActive === false) {
+        const others = await prisma.service.count({
+            where: { organizationId, isActive: true, id: { not: req.params.id } },
+        })
+        if (others === 0) {
+            return res.status(400).json({ message: 'Keep at least one active service.' })
+        }
+    }
+
+    try {
+        // organizationId in the filter: owners can only change their own services
+        const result = await prisma.service.updateMany({
+            where: { id: req.params.id, organizationId },
+            data,
+        })
+        if (result.count === 0) {
+            return res.status(404).json({ message: 'Service not found.' })
+        }
+    } catch (err) {
+        // P2002 is Prisma's code for breaking a unique rule (a duplicate name)
+        if (err.code === 'P2002') {
+            return res.status(409).json({ message: 'You already have a service with that name.' })
+        }
+        throw err
+    }
+
+    res.json({ ok: true })
+}
+
+module.exports = {
+    getOverview, listStaff, addStaff, updateStaff, resetStaffPassword,
+    listServices, addService, updateService,
+}
