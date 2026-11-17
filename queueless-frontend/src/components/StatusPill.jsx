@@ -11,6 +11,8 @@ const styles = {
   skipped: "bg-[#EFEFEF] text-[#6B6B6B]",
   active: "bg-[#E4F0E6] text-forest",
   inactive: "bg-[#EFEFEF] text-[#6B6B6B]",
+  success: "bg-[#E4F0E6] text-forest",
+  failed: "bg-[#F6E3E1] text-[#B8402F]",
 };
 
 function StatusPill({ status }) {

@@ -71,6 +71,8 @@ model Organization {
   staff        User[]        @relation("OrgStaff")
   services     Service[]
   appointments Appointment[]
+  paidUntil    DateTime?
+  payments     Payment[]
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
 }
@@ -105,4 +107,25 @@ model Appointment {
 
   @@unique([organizationId, date, queueNumber])
   @@index([customerId])
+}
+
+enum PaymentStatus {
+  pending
+  success
+  failed
+}
+
+model Payment {
+  id             String        @id @default(uuid())
+  reference      String        @unique
+  plan           Plan
+  amount         Int           // in kobo: ₦1 = 100 kobo
+  currency       String        @default("NGN")
+  status         PaymentStatus @default(pending)
+  paidAt         DateTime?
+  organization   Organization  @relation(fields: [organizationId], references: [id])
+  organizationId String
+  createdAt      DateTime      @default(now())
+
+  @@index([organizationId])
 }

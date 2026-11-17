@@ -13,6 +13,7 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import ChangePassword from "./pages/ChangePassword";
 import NotFound from "./pages/NotFound";
+import BillingCallback from "./pages/BillingCallback";
 
 function App() {
   return (
@@ -63,6 +64,14 @@ function App() {
           element={
             <ProtectedRoute roles={["owner"]}>
               <Business />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/business/billing/callback"
+          element={
+            <ProtectedRoute roles={["owner"]}>
+              <BillingCallback />
             </ProtectedRoute>
           }
         />

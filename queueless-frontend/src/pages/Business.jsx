@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import PageHero from "../components/PageHero";
 import StatusPill from "../components/StatusPill";
 import Button from "../components/Button";
@@ -10,6 +10,7 @@ const tabs = [
   { id: "overview", label: "Overview" },
   { id: "staff", label: "Staff" },
   { id: "services", label: "Services" },
+  { id: "billing", label: "Billing" },
 ];
 
 const inputStyles =
@@ -563,9 +564,178 @@ function ServicesTab({ token }) {
   );
 }
 
+const naira = (n) =>
+  new Intl.NumberFormat("en-NG", {
+    style: "currency",
+    currency: "NGN",
+    maximumFractionDigits: 0,
+  }).format(n);
+
+const fmtDate = (d) =>
+  new Date(d).toLocaleDateString("en-GB", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  });
+
+function BillingTab({ token }) {
+  const [data, setData] = useState(null);
+  const [error, setError] = useState("");
+  const [payingPlan, setPayingPlan] = useState(null);
+
+  useEffect(() => {
+    api("/api/business/billing", { token })
+      .then(setData)
+      .catch((err) => setError(err.message));
+  }, [token]);
+
+  const pay = async (planId) => {
+    setError("");
+    setPayingPlan(planId);
+    try {
+      const { authorizationUrl } = await api("/api/business/billing/checkout", {
+        method: "POST",
+        token,
+        body: { plan: planId },
+      });
+      window.location.assign(authorizationUrl); // off to Paystack's checkout page
+    } catch (err) {
+      setError(err.message);
+      setPayingPlan(null);
+    }
+  };
+
+  if (!data) {
+    return error ? (
+      <p className="text-sm text-[#B8402F]">{error}</p>
+    ) : (
+      <p className="text-sm text-ink-soft">Loading...</p>
+    );
+  }
+
+  const { billing, plans, payments } = data;
+  const th =
+    "text-left px-5 py-3.5 font-mono text-[11px] tracking-wide uppercase text-ink-soft border-b border-line";
+  const td = "px-5 py-[15px] border-b border-line text-sm";
+
+  return (
+    <div className="flex flex-col gap-8">
+      {error && (
+        <p className="text-sm text-[#B8402F] bg-[#F6E3E1] rounded-lg p-2.5">
+          {error}
+        </p>
+      )}
+
+      <div className="bg-paper-raised border border-line rounded-2xl p-6 flex flex-wrap items-center justify-between gap-4">
+        <div>
+          <h2 className="font-display font-semibold text-xl capitalize">
+            {billing.plan} plan
+          </h2>
+          <p className="text-sm text-ink-soft mt-1">
+            {billing.active
+              ? `Active until ${fmtDate(billing.paidUntil)}`
+              : billing.paidUntil
+                ? `Expired on ${fmtDate(billing.paidUntil)}`
+                : "No active subscription yet"}
+          </p>
+        </div>
+        <StatusPill status={billing.active ? "active" : "inactive"} />
+      </div>
+
+      <div>
+        <h2 className="text-[15px] font-bold mb-4">Choose a plan</h2>
+        <div className="grid md:grid-cols-3 gap-4">
+          {plans.map((p) => {
+            const current = billing.active && billing.plan === p.id;
+            return (
+              <div
+                key={p.id}
+                className={`rounded-2xl p-6 flex flex-col gap-4 border-[1.5px] ${
+                  current
+                    ? "border-forest bg-[#EEF5EF]"
+                    : "border-line bg-paper-raised"
+                }`}
+              >
+                <div>
+                  <h3 className="font-semibold text-[15px]">{p.name}</h3>
+                  <p className="font-mono font-bold text-2xl text-forest mt-1">
+                    {naira(p.price)}
+                    <span className="text-xs font-medium text-ink-soft">
+                      /month
+                    </span>
+                  </p>
+                </div>
+                <ul className="text-sm text-ink-soft flex flex-col gap-1.5 flex-1">
+                  {p.features.map((f) => (
+                    <li key={f}>· {f}</li>
+                  ))}
+                </ul>
+                <Button
+                  text={
+                    payingPlan === p.id
+                      ? "Redirecting..."
+                      : current
+                        ? "Renew for 30 days"
+                        : billing.active
+                          ? "Switch to this plan"
+                          : `Pay ${naira(p.price)}`
+                  }
+                  onClick={() => pay(p.id)}
+                  variant={current ? "ghost" : "primary"}
+                  fullWidth
+                />
+              </div>
+            );
+          })}
+        </div>
+        <p className="text-xs text-ink-soft mt-3">
+          Each payment adds 30 days. Paying before your plan ends adds the time
+          on top of what's left.
+        </p>
+      </div>
+
+      <div>
+        <h2 className="text-[15px] font-bold mb-4">Payment history</h2>
+        <div className="bg-paper-raised border border-line rounded-2xl overflow-x-auto">
+          {payments.length === 0 ? (
+            <p className="p-5 text-sm text-ink-soft">No payments yet.</p>
+          ) : (
+            <table className="w-full border-collapse">
+              <thead className="bg-paper">
+                <tr>
+                  <th className={th}>Date</th>
+                  <th className={th}>Plan</th>
+                  <th className={th}>Amount</th>
+                  <th className={th}>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {payments.map((p) => (
+                  <tr key={p.id}>
+                    <td className={td}>{fmtDate(p.paidAt || p.createdAt)}</td>
+                    <td className={`${td} capitalize`}>{p.plan}</td>
+                    <td className={`${td} font-mono`}>{naira(p.amount)}</td>
+                    <td className={td}>
+                      <StatusPill status={p.status} />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function Business() {
   const { token } = useAuth();
-  const [tab, setTab] = useState("overview");
+  const [searchParams] = useSearchParams();
+  const requested = searchParams.get("tab");
+  const [tab, setTab] = useState(
+    tabs.some((t) => t.id === requested) ? requested : "overview",
+  );
 
   return (
     <div>
@@ -594,6 +764,7 @@ function Business() {
         {tab === "overview" && <Overview token={token} />}
         {tab === "staff" && <StaffTab token={token} />}
         {tab === "services" && <ServicesTab token={token} />}
+        {tab === "billing" && <BillingTab token={token} />}
       </div>
     </div>
   );
